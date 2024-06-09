@@ -1,0 +1,334 @@
+\documentclass{article}
+\usepackage[margin=0.7in]{geometry} % Adjust the margin as needed
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{setspace} % Adjust line spacing
+\usepackage{float} % Required for positioning tables and figures
+\usepackage{minted}
+
+\begin{document}
+\title{COMP1204: Data Management \\ Coursework Two: Representing Covid-19 data }
+\author{PROKOPIS GEORGIOU\\STUDENT ID: 34077499}
+\date{}
+\maketitle
+
+\begin{center}
+   \section*{CORONAVIRUS DATA FROM THE EU OPEN DATA PORTAL.\\RELATIONAL MODEL, NORMALISATION, MODELLING, QUERYING} 
+\end{center}
+\vspace{2cm}
+
+\section*{Introduction}
+
+The COVID-19 pandemic has presented unprecedented challenges to global health systems and societies, prompting the need for innovative data management strategies. In their COMP1204: Data Management coursework, the students have been tasked with addressing this demand by organizing COVID-19 data sourced from the EU Open Data Portal into a SQLite database. Their objective is to establish a structured framework that facilitates insightful analysis of pandemic trends. Throughout this report, the students will outline their methodology for designing the database. This entails conceptualizing a relational model, ensuring data organization adheres to normalization principles, and constructing queries to extract meaningful insights. Each step will be thoroughly explained, from identifying relationships between different data points to optimizing the database's efficiency through normalization. Furthermore, the report will demonstrate how the students translated their plan into action. This includes setting up the database, importing the COVID-19 dataset, and executing queries to uncover valuable insights. The aim is to showcase how a well-designed database can streamline data management processes and empower informed analysis of COVID-19 statistics.
+
+
+\section{The Relational Model}
+\subsection*{EX1: Express the relation directly represented in the dataset file. Assign relevant SQLite data types to each column.}
+\text{dataset}(\text{dateRep}, \ \text{day}, \ \text{month}, \ \text{year}, \ \text{cases}, \ \ \text{deaths}, \ \text{countriesAndTerritories}, \ \text{geoId}, \ \text{countryterritoryCode}, \ \ \text{popData2020}, \  \text{continentExp})
+
+\begin{center}
+\begin{table}[H]
+\centering
+\footnotesize
+\begin{tabular}{|c|c|}
+\hline
+\textbf{INTEGER} & \textbf{TEXT} \\
+\hline
+ day & dateRep\\
+ month& countriesAndTerritories  \\
+year & geoId  \\
+cases& countryterritoryCode \\
+deaths& continentExp \\
+popData2020& \\
+\hline
+\end{tabular}
+\caption{Attributes and types}
+\label{tab:covid-data}
+\end{table}
+\end{center}
+This represents the dataset as a relational table with each column having the appropriate SQLite data type.
+
+\subsection*{EX2: List the minimal set of Functional Dependencies (FDs).}
+\begin{minipage}{0.5\textwidth}
+\begin{center}
+\begin{tabular}{|c|}
+  \hline
+  \textbf{Functional Dependency} \\ [0.5ex]
+  \hline
+  $ \text{(day, month, year)} \rightarrow \text{dateRep}$\\ [0.5ex] 
+  $ \text{dateRep, countriesAndTerritories} \rightarrow \text{cases}$\\ [0.5ex]
+  $ \text{dateRep, countriesAndTerritories} \rightarrow \text{deaths}$\\ [0.5ex]
+  $ \text{dateRep, countryterritoryCode} \rightarrow \text{cases}$\\ [0.5ex]
+  $ \text{dateRep, countryterritoryCode} \rightarrow \text{deaths}$\\ [0.5ex]
+  $ \text{dateRep, geoId} \rightarrow \text{cases}$\\ [0.5ex]
+  $ \text{dateRep, geoId} \rightarrow \text{deaths}$\\ [0.5ex]
+
+  \hline
+\end{tabular}
+\end{center}
+\end{minipage}%
+\begin{minipage}{0.5\textwidth}
+\begin{center}
+\begin{tabular}{|c|}
+  \hline
+  \textbf{Functional Dependency} \\ [0.5ex]
+  \hline
+  $ \text{countriesAndTerritories} \rightarrow \text{countryterritoryCode}$\\ [0.5ex]
+  $ \text{countriesAndTerritories} \rightarrow \text{continentExp}$\\ [0.5ex]
+  $ \text{countryterritoryCode} \rightarrow \text{continentExp}$\\ [0.5ex]
+  $ \text{countriesAndTerritories} \rightarrow \text{popData2020}$\\ [0.5ex]
+$ \text{geoId} \rightarrow \text{countriesAndTerritories}$\\ [0.5ex]
+  $ \text{geoId} \rightarrow \text{countryterritoryCode}$\\ [0.5ex]
+  $ \text{geoId} \rightarrow \text{popData2020}$\\ [0.5ex]
+  \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+\vspace{0.5cm}
+
+Assumptions: 1) dateRep can represent day, month and year. Thus, it would be redundant to write them separately. 2) countriesAndTerritories, geoId, countryterritoryCode, popData2020 and continentExp are all redundant since information is unnecessarily repeated.
+    
+\subsection*{EX3: From your minimal set of functional dependencies, list the potential candidate keys.}
+From these FDs, the potential candidate keys are:
+(dateRep, geoId), (dateRep, countriesAndTerritories), (dateRep, countryterritoryCode).
+
+\subsection*{EX4: Identify a suitable primary key, and justify your decision.}
+The composite key (dateRep, geoId) appears to be the most suitable primary key. It provides a unique identifier for each record in the dataset and offers a high level of granularity by combining the date of reporting with the unique country or territory. This primary key ensures that each record is uniquely identifiable and allows for efficient data retrieval and manipulation.
+
+\section{Normalisation}
+\subsection*{EX5: List any partial-key dependencies in the relation as it stands and any resulting additional relations you should create as part of the decomposition.}
+\begin{enumerate}
+    \item \(\text{{dateRep}}\rightarrow \text{{day}}\)
+    \item \(\text{{dateRep}}\rightarrow \text{{month}}\)
+    \item \(\text{{dateRep}}\rightarrow \text{{year}}\)
+    \item \( \text{{geoId}} \rightarrow \text{{popData2020}} \)
+    \item \( \text{{geoId}} \rightarrow \text{{continentExp}} \)
+    \item \( \text{{geoId}} \rightarrow \text{{countryterritoryCode}} \)
+    \item \( \text{{geoId}} \rightarrow \text{{countriesAndTerritories}} \)
+\end{enumerate} 
+Additional Tables: 
+\begin{enumerate}
+    \item \(\text{{(dateRep, geoId)}}\rightarrow \text{{(cases,deaths)}}\)
+    \item \(\text{{dateRep}}\rightarrow \text{{(day, month, year)}}\)
+    \item \(\text{{geoId}}\rightarrow \text{{(countriesAndTerritories, countryterritoryCode, popData2020, continentExp)}}\)
+\end{enumerate} 
+
+\subsection*{EX6: Use decomposition and your answer to the above to achieve 2nd Normal Form, introducing appropriate new relations. List the new relations and their fields, types and keys. Explain the process you took.}
+
+Additional Relations:
+\begin{enumerate}
+    \item \text{Condition(dateRep, geoId, cases, deaths)}
+    \item \text{Date(dateRep, day, month, year)}
+    \item \text{Country(geoId, countriesAndTerritories, popData2020, continentExp)}
+\end{enumerate}
+The primary keys for the relation Condition are (dataRep and geoId). For the relation Date it is dataRep and fro relation Country, the primary key is geoId. The types are the same as in Table 1. To achieve 2nd Normal Form (2NF), I decomposed the original relation into smaller relations to eliminate partial-key dependencies. The decomposition process involved identifying attributes that were functionally dependent on only part of the primary key and separating them into new relations.
+
+\subsection*{\small Condition Relation}
+
+This relation includes attributes that are functionally dependent on both the date of reporting (\texttt{dateRep}) and the unique identifier for the country or territory (\texttt{geoId}). The primary key for this relation is a composite key consisting of \texttt{dateRep} and \texttt{geoId}. 
+
+\subsection*{\small Date Relation}
+
+To address the partial-key dependencies related to the date of reporting (\texttt{dateRep}), I created a separate relation named \texttt{Date}. This relation includes attributes specific to the date, namely \texttt{day}, \texttt{month}, and \texttt{year}. The primary key for this relation is \texttt{dateRep}.
+
+\subsection*{\small Country Relation}
+
+Similarly, I created a separate relation named \texttt{Country} to handle attributes related to countries or territories. This relation includes attributes such as \texttt{countriesAndTerritories}, \texttt{popData2020}, and \texttt{continentExp}, which are functionally dependent on the unique identifier for the country or territory (\texttt{geoId}). The primary key for this relation is \texttt{geoId}.
+
+\subsection*{EX7: List transitive dependencies, if any, in your new relations.}
+All new relations are in 2NF as they do not contain any transitive dependencies. Therefore, no further decomposition is needed.
+
+\subsection*{EX8: Convert your relations into 3rd Normal Form using your answers to the above. List the new relations and their fields, types and keys. Explain the process you took.}
+
+The relations Condition, Date, and Country are in 3rd Normal Form (3NF) because they meet the following criteria:
+
+\begin{enumerate}
+    \item \textbf{Atomic Values}: All attributes contain atomic values, meaning they cannot be further divided. In each relation, the attributes represent single, indivisible pieces of information. For example, in the Condition relation, cases and deaths represent single counts of COVID-19 cases and deaths, respectively.
+    
+    \item \textbf{No Transitive Dependencies}: There are no transitive dependencies in any of the relations. A transitive dependency occurs when a non-prime attribute depends on another non-prime attribute, rather than directly on the primary key. However, in all three relations, each non-prime attribute is fully functionally dependent on the primary key, and there are no indirect dependencies between non-prime attributes. For example, in the Country relation, countriesAndTerritories, popData2020, and continentExp are all directly dependent on the primary key geoId.
+    
+    \item \textbf{Every Non-Prime Attribute Fully Depends on the Primary Key}: Each non-prime attribute in all three relations is fully functionally dependent on the primary key. This means that the value of any non-prime attribute is uniquely determined by the primary key alone, without any further dependencies. For instance, in the Date relation, day, month, and year are all fully dependent on the primary key dateRep.
+\end{enumerate}
+
+\subsection*{EX9: Convert your relations into Boyce-Codd Normal Form. Justify and explain how your relations are in BCNF.}
+
+To convert the relations into Boyce-Codd Normal Form (BCNF), we need to ensure that every determinant is a candidate key. Here's how we can justify that the relations Condition, Date, and Country are in BCNF:
+
+\subsection*{\small Condition Relation:}
+\begin{itemize}
+    \item Primary key: (dateRep, geoId)
+    \item Non-prime attributes: cases, deaths
+    \item \text{Justification}: The primary key (dateRep, geoId) uniquely identifies each tuple in the relation. Both cases and deaths are fully functionally dependent on the primary key. Since the primary key is a composite key, it cannot be decomposed further.
+\end{itemize}
+
+\subsection*{\small Date Relation:}
+\begin{itemize}
+    \item Primary key: dateRep
+    \item Non-prime attributes: day, month, year
+    \item \text{Justification}: The primary key dateRep uniquely identifies each tuple in the relation. All non-prime attributes (day, month, year) are fully functionally dependent on the primary key. Since the primary key is a candidate key, and there are no dependencies on other non-prime attributes.
+\end{itemize}
+
+\subsection*{\small Country Relation:}
+\begin{itemize}
+    \item Primary key: geoId
+    \item Non-prime attributes: countriesAndTerritories, popData2020, continentExp
+    \item \text{Justification}: The primary key geoId uniquely identifies each tuple in the relation. All non-prime attributes (countriesAndTerritories, popData2020, continentExp) are fully functionally dependent on the primary key. Since the primary key is a candidate key, and there are no dependencies on other non-prime attributes.
+\end{itemize}
+The relations Condition, Date, and Country are in BCNF because every determinant is a candidate key, ensuring that there are no non-trivial functional dependencies on attributes that are not candidate keys.
+
+\section{Modelling}
+\subsection*{EX10}
+\begin{minted}[linenos]{bash}
+sqlite3 coronavirus.db 
+sqlite> .open coronavirus.db
+sqlite> .mode csv
+sqlite> .import dataset.csv dataset
+sqlite> .output dataset.sql
+\\Open DataGrip and set the data source and drivers
+sqlite3 coronavirus.db .dump > database.sql
+\end{minted}
+\newpage
+
+\subsection*{EX11}
+\begin{minted}[linenos]{bash}
+CREATE TABLE Date (
+    dateRep TEXT NOT NULL PRIMARY KEY,
+    day     INTEGER NOT NULL,
+    month   INTEGER NOT NULL,
+    year    INTEGER NOT NULL
+);
+CREATE TABLE Country (
+    geoId                   TEXT NOT NULL CONSTRAINT Country_pk PRIMARY KEY,
+    countriesAndTerritories TEXT NOT NULL,
+    countryterritoryCode    TEXT NOT NULL,
+    popData2020             INTEGER NOT NULL,
+    continentExp            TEXT NOT NULL
+);
+CREATE TABLE Condition (
+    dateRep TEXT NOT NULL,
+    geoId   TEXT NOT NULL,
+    deaths  INTEGER,
+    cases   INTEGER,
+    CONSTRAINT Condition_pk PRIMARY KEY (dateRep, geoId)
+);
+\end{minted}
+
+\subsection*{EX12}
+\begin{minted}[linenos]{bash}
+-- Populate the Date table
+INSERT INTO Date (dateRep, day, month, year)
+SELECT DISTINCT dateRep, day, month, year
+FROM dataset;
+
+-- Populate the Country table
+INSERT INTO Country (geoId, countriesAndTerritories, countryterritoryCode, popData2020, continentExp)
+SELECT DISTINCT geoId, countriesAndTerritories, countryterritoryCode, popData2020, continentExp
+FROM dataset;
+
+-- Populate the Condition table
+INSERT INTO Condition (dateRep, geoId, deaths, cases)
+SELECT DISTINCT dateRep, geoId, deaths, cases
+FROM dataset;
+\end{minted}
+
+\subsection*{EX13}
+\begin{minted}[linenos]{bash}
+sqlite3 coronavirus.db < dataset.sql
+sqlite3 coronavirus.db < ex11.sql
+sqlite3 coronavirus.db < ex12.sql
+//Confirmimg that I have run these commands and they worked.
+\end{minted}
+
+\section{Querying}
+\subsection*{EX14: The worldwide total number of cases and deaths (with total cases and total deaths as columns)}
+\begin{minted}[linenos]{bash}
+SELECT
+    SUM(cases) AS total_cases,
+    SUM(deaths) AS total_deaths
+FROM
+    Condition;
+\end{minted}
+\newpage
+\subsection*{EX15: The number of cases by date, in increasing date order, for the United Kingdom (with the date reported and number of cases as columns)}
+\begin{minted}[linenos]{bash}
+SELECT
+    Date.dateRep,
+    Condition.cases
+FROM
+    Date
+JOIN
+    Condition ON Date.dateRep = Condition.dateRep
+JOIN
+    Country ON Condition.geoId = Country.geoId
+WHERE
+    Country.countriesAndTerritories = 'United_Kingdom'
+ORDER BY
+    Date.year ASC,
+    Date.month ASC,
+    Date.day ASC;
+\end{minted}
+\subsection*{EX16: The number of cases and deaths by date, in increasing date order, for each country (with country name, date, number of cases and number of deaths as columns)}
+\begin{minted}[linenos]{bash}
+SELECT
+    Country.countriesAndTerritories,
+    Condition.dateRep,
+    Condition.cases, Condition.deaths
+FROM
+    Country
+JOIN
+    Condition ON Country.geoId = Condition.geoId
+JOIN
+    Date ON Condition.dateRep = Date.dateRep
+GROUP BY
+    Country.countriesAndTerritories,
+    Condition.dateRep
+ORDER BY
+    Country.countriesAndTerritories ASC,
+    Date.year ASC,
+    Date.month ASC,
+    Date.day ASC;
+\end{minted}
+
+\subsection*{EX17: The total number of cases and deaths as a percentage (to 2DP) of the population, for each country}
+\begin{minted}[linenos]{bash}
+SELECT
+    Country.countriesAndTerritories,
+    ROUND((SUM(Condition.cases) * 100.0 / Country.popData2020), 2) AS "% cases",
+    ROUND((SUM(Condition.deaths) * 100.0 / Country.popData2020), 2) AS "% deaths"
+FROM
+    Condition
+JOIN
+    Country ON Condition.geoId = Country.geoId
+GROUP BY
+    Country.countriesAndTerritories;
+\end{minted}
+
+\subsection*{EX18: A descending list of the the top 10 countries by name, by percentage (to 2DP) total deaths out of total cases in that country.}
+\begin{minted}[linenos]{bash}
+SELECT
+    Country.countriesAndTerritories AS Country,
+    ROUND((SUM(Condition.deaths) * 100.0 / SUM(Condition.cases)), 2) AS "% deaths of country cases"
+FROM
+    Condition
+JOIN
+    Country ON Condition.geoId = Country.geoId
+GROUP BY
+    Country.countriesAndTerritories
+ORDER BY
+    "% deaths of country cases" DESC
+LIMIT
+    10;
+\end{minted}
+
+\subsection*{EX19: The date against a cumulative running total of the number of deaths by day and cases by day for the united kingdom.}
+\begin{minted}[linenos]{bash}
+SELECT Date.dateRep AS "date",
+       SUM(Condition.deaths) OVER win1 AS "cumulative UK deaths",
+       SUM(Condition.cases) OVER win1 AS "cumulative UK cases"
+FROM Date
+JOIN Condition ON Date.dateRep = Condition.dateRep
+WHERE Condition.geoId = 'UK'
+WINDOW win1 AS (ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+ORDER BY Date.year, Date.month, Date.day ASC;
+\end{minted}
+\end{document}
